@@ -175,21 +175,49 @@
      (reset! flap-state (reset-state @flap-state time))
      (time-loop time))))
 
+(defn game-params []
+  [:div.sidebar
+   (for [[k v] [["horiz-vel" horiz-vel]
+                ["gravity" gravity]
+                ["jump-vel" jump-vel]
+                ["start-y" start-y]
+                ["bottom-y" bottom-y]
+                ["flappy-x" flappy-x]
+                ["flappy-width" flappy-width]
+                ["flappy-height" flappy-height]
+                ["pillar-spacing" pillar-spacing]
+                ["pillar-gap" pillar-gap]
+                ["pillar-width" pillar-width]]]
+     ^{:key k}
+     [:div [:h4 k]
+      [:span.stat v]])])
+
+
+
 (defn main-template [{:keys [score cur-time jump-count
                              timer-running border-pos
                              flappy-y pillar-list]}]
-  (sab/html [:div.game
-             [:div.board {:onMouseDown (fn [e]
-                                         (swap! flap-state jump)
-                                         (.preventDefault e))}
-              [:h1.score score]
-              (if-not timer-running
-                [:a.start-button {:onClick #(start-game)}
-                 (if (< 1 jump-count) "RESTART" "START")]
-                [:span])
-              [:div (map pillar pillar-list)]
-              [:div.flappy {:style {:top (px flappy-y)}}]
-              [:div.scrolling-border {:style {:background-position-x (px border-pos)}}]]]))
+  (sab/html [:div.game-container
+             (game-params)
+             [:div.game
+              [:div.board-container
+               [:div.board {:onMouseDown (fn [e]
+                                           (swap! flap-state jump)
+                                           (.preventDefault e))}
+                [:h1.score score]
+                (if-not timer-running
+                  [:a.start-button {:onClick #(start-game)}
+                   (if (< 1 jump-count) "RESTART" "START")]
+                  [:span])
+                [:div (map pillar pillar-list)]
+                [:div.flappy {:style {:top (px flappy-y)}}]
+                [:div.scrolling-border {:style {:background-position-x (px border-pos)}}]]]]
+             [:div.sidebar
+              [:div [:h4 "Top score"]
+               [:span.stat "N/A"]]
+
+              [:div [:h4 "Games played"]
+               [:span.stat "N/A"]]]]))
 
 (let [node (.getElementById js/document "board-area")]
   (defn renderer [full-state]

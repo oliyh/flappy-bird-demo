@@ -4,7 +4,45 @@ body {
    background-color: rgb(32,35,50);
 }
 
-#board-area {
+.game-container {
+    text-align: center;
+}
+
+.sidebar {
+    display: inline-block;
+    vertical-align: top;
+    border: 0px solid white;
+    width: calc(50% - 240px);
+    padding: 0;
+}
+
+.sidebar > div {
+    border: 1px solid white;
+    max-width: 150px;
+    color: white;
+    min-height: 51px;
+    padding: 2px;
+    text-align: center;
+    margin: 0 auto 2px auto;
+}
+
+.sidebar h4 {
+    margin-top: 0;
+    margin-bottom: 2px;
+    color: lightgreen;
+}
+
+.sidebar .stat {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.game {
+    display: inline-block;
+    width: 480px;
+}
+
+.board-container {
     position: relative;
     width: 480px;
     height: 640px;
