@@ -26,25 +26,25 @@
 (def pillar-gap 158) ;; 158
 (def pillar-width 86)
 
-(def starting-state { :timer-running false
-                      :jump-count 0
-                      :initial-vel 0
-                      :start-time 0
-                      :flappy-start-time 0
-                      :flappy-y   start-y
-                      :pillar-list
-                      [{ :start-time 0
-                         :pos-x 900
-                         :cur-x 900
-                         :gap-top 200 }]})
+(def starting-state {:timer-running     false
+                     :jump-count        0
+                     :initial-vel       0
+                     :start-time        0
+                     :flappy-start-time 0
+                     :flappy-y          start-y
+                     :pillar-list
+                     [{:start-time 0
+                       :pos-x      900
+                       :cur-x      900
+                       :gap-top    200}]})
 
 (defn reset-state [_ cur-time]
   (-> starting-state
       (update-in [:pillar-list] (fn [pls] (map #(assoc % :start-time cur-time) pls)))
       (assoc
-          :start-time cur-time
-          :flappy-start-time cur-time
-          :timer-running true)))
+       :start-time cur-time
+       :flappy-start-time cur-time
+       :timer-running true)))
 
 (defonce flap-state (atom starting-state))
 
@@ -83,19 +83,19 @@
                           :cur-x
                           (filter #(> (:cur-x %) (- pillar-width)) pillars-with-pos))]
     (assoc st
-      :pillar-list
-      (if (< (count pillars-in-world) 3)
-        (conj pillars-in-world
-              (new-pillar
-               cur-time
-               (+ pillar-spacing
-                  (:cur-x (last pillars-in-world)))))
-        pillars-in-world))))
+           :pillar-list
+           (if (< (count pillars-in-world) 3)
+             (conj pillars-in-world
+                   (new-pillar
+                    cur-time
+                    (+ pillar-spacing
+                       (:cur-x (last pillars-in-world)))))
+             pillars-in-world))))
 
 (defn sine-wave [st]
   (assoc st
-    :flappy-y
-    (+ start-y (* 30 (.sin js/Math (/ (:time-delta st) 300))))))
+         :flappy-y
+         (+ start-y (* 30 (.sin js/Math (/ (:time-delta st) 300))))))
 
 (defn update-flappy [{:keys [time-delta initial-vel flappy-y jump-count] :as st}]
   (if (pos? jump-count)
@@ -105,20 +105,20 @@
                     (- bottom-y flappy-height)
                     new-y)]
       (assoc st
-        :flappy-y new-y))
+             :flappy-y new-y))
     (sine-wave st)))
 
 (defn score [{:keys [cur-time start-time] :as st}]
   (let [score (- (.abs js/Math (floor (/ (- (* (- cur-time start-time) horiz-vel) 544)
-                               pillar-spacing)))
+                                         pillar-spacing)))
                  4)]
-  (assoc st :score (if (neg? score) 0 score))))
+    (assoc st :score (if (neg? score) 0 score))))
 
 (defn time-update [timestamp state]
   (-> state
       (assoc
-          :cur-time timestamp
-          :time-delta (- timestamp (:flappy-start-time state)))
+       :cur-time timestamp
+       :time-delta (- timestamp (:flappy-start-time state)))
       update-flappy
       update-pillars
       collision?
@@ -127,9 +127,9 @@
 (defn jump [{:keys [cur-time jump-count] :as state}]
   (-> state
       (assoc
-          :jump-count (inc jump-count)
-          :flappy-start-time cur-time
-          :initial-vel jump-vel)))
+       :jump-count (inc jump-count)
+       :flappy-start-time cur-time
+       :initial-vel jump-vel)))
 
 ;; derivatives
 
@@ -139,8 +139,8 @@
 
 (defn pillar-offset [{:keys [gap-top] :as p}]
   (assoc p
-    :upper-height gap-top
-    :lower-height (- bottom-y gap-top pillar-gap)))
+         :upper-height gap-top
+         :lower-height (- bottom-y gap-top pillar-gap)))
 
 (defn pillar-offsets [state]
   (update-in state [:pillar-list]
@@ -157,16 +157,16 @@
 (defn pillar [{:keys [cur-x pos-x upper-height lower-height]}]
   [:div.pillars
    [:div.pillar.pillar-upper {:style {:left (px cur-x)
-                                       :height upper-height}}]
+                                      :height upper-height}}]
    [:div.pillar.pillar-lower {:style {:left (px cur-x)
-                                       :height lower-height}}]])
+                                      :height lower-height}}]])
 
 (defn time-loop [time]
   (let [new-state (swap! flap-state (partial time-update time))]
     (when (:timer-running new-state)
       (go
-       (<! (timeout 30))
-       (.requestAnimationFrame js/window time-loop)))))
+        (<! (timeout 30))
+        (.requestAnimationFrame js/window time-loop)))))
 
 (defn start-game []
   (.requestAnimationFrame
@@ -178,17 +178,18 @@
 (defn main-template [{:keys [score cur-time jump-count
                              timer-running border-pos
                              flappy-y pillar-list]}]
-  (sab/html [:div.board { :onMouseDown (fn [e]
+  (sab/html [:div.game
+             [:div.board {:onMouseDown (fn [e]
                                          (swap! flap-state jump)
                                          (.preventDefault e))}
-             [:h1.score score]
-             (if-not timer-running
-               [:a.start-button {:onClick #(start-game)}
-                (if (< 1 jump-count) "RESTART" "START")]
-               [:span])
-             [:div (map pillar pillar-list)]
-             [:div.flappy {:style {:top (px flappy-y)}}]
-             [:div.scrolling-border {:style { :background-position-x (px border-pos)}}]]))
+              [:h1.score score]
+              (if-not timer-running
+                [:a.start-button {:onClick #(start-game)}
+                 (if (< 1 jump-count) "RESTART" "START")]
+                [:span])
+              [:div (map pillar pillar-list)]
+              [:div.flappy {:style {:top (px flappy-y)}}]
+              [:div.scrolling-border {:style {:background-position-x (px border-pos)}}]]]))
 
 (let [node (.getElementById js/document "board-area")]
   (defn renderer [full-state]
